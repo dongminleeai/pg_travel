@@ -4,7 +4,6 @@ env = gym.make('Hopper-v2')
 
 for episode in range(10000):
     env.reset()
-
     while True:
         env.render()
         action = env.action_space.sample()
