@@ -12,4 +12,3 @@ for episode in range(10000):
                 observation, action, reward))
         print("observation.shape : {} | action.shape : {}".format(
                 observation.shape, action.shape))
-

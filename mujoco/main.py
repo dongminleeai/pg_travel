@@ -9,7 +9,7 @@ from utils.utils import get_action, save_checkpoint
 from collections import deque
 from utils.running_state import ZFilter
 from hparams import HyperParams as hp
-from tensorboardX import SummaryWriter
+from tensorboardX import SummaryWriter 
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--algorithm', type=str, default='PPO',
@@ -45,8 +45,8 @@ if __name__=="__main__":
     num_inputs = env.observation_space.shape[0]
     num_actions = env.action_space.shape[0]
 
-    print('state size:', num_inputs)
-    print('action size:', num_actions)
+    # print('state size:', num_inputs) # 11
+    # print('action size:', num_actions) # 3
 
     writer = SummaryWriter(args.logdir)
 
@@ -54,6 +54,8 @@ if __name__=="__main__":
     critic = Critic(num_inputs)
 
     running_state = ZFilter((num_inputs,), clip=5)
+    # <utils.running_state.ZFilter object at 0x10c7bac18>
+    # print("running_state", running_state)
 
     if args.load_model is not None:
         saved_ckpt_path = os.path.join(os.getcwd(), 'save_model', str(args.load_model))
@@ -82,7 +84,38 @@ if __name__=="__main__":
         while steps < 2048:
             episodes += 1
             state = env.reset()
+
+            # state 
+            # [ 1.25242342e+00  2.48001792e-03 -4.00974886e-03 -3.74310984e-03
+            # 1.76107279e-03 -4.24441739e-03  4.94643485e-03  3.23042089e-04
+            # -4.13514140e-03  3.71542489e-03 -3.37123480e-03]
+            # running_state(state) 
+            # [0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+
+            # state 
+            # [ 1.25227644e+00 -4.76101915e-03 -4.70683807e-03 -4.60811685e-03
+            # 4.24723880e-04 -1.29097427e-03  2.35219037e-03 -1.20900498e-03
+            # 4.22748799e-03  2.70184498e-03 -1.58194091e-03]
+            # running_state(state) 
+            # [ 0.97938591  0.5318234   0.61519367  0.59847909 -1.63746175  0.76422659
+            # 1.44379947  0.81533691  0.78033282  0.75001262 -0.78464144]
+
+            # state 
+            # [ 1.24754546e+00 -1.81960531e-03  7.49504932e-04  4.73516957e-03
+            # -1.13169892e-03  3.49326044e-03  1.37597736e-03 -3.11373131e-04
+            # 1.26697456e-03 -7.93181335e-04 -3.45176126e-03]
+            # running_state(state) 
+            # [0.01424333 0.79506274 0.4574601  0.50328137 0.64677531 0.92352076
+            # 0.00605499 0.72728407 0.35249767 0.29978792 0.64943154]
+
+            # running_state는 input으로 들어오는 state의 scale이 일정하지 않기 때문에 사용합니다. 
+            # 즉 state의 각 dimension을 평균 0 분산 1로 standardization 하는 것입니다. 
+            # 따라서 모델을 저장할 때 각 dimension 마다의 평균과 분산도 같이 저장해서 
+            # 테스트할 때 불러와서 사용해야 합니다.
+            # print("state", state)
             state = running_state(state)
+            # print("running_state(state)", state)
+            
             score = 0
             for _ in range(10000):
                 if args.render:
@@ -92,6 +125,7 @@ if __name__=="__main__":
                 mu, std, _ = actor(torch.Tensor(state).unsqueeze(0))
                 action = get_action(mu, std)[0]
                 next_state, reward, done, _ = env.step(action)
+
                 next_state = running_state(next_state)
 
                 if done:

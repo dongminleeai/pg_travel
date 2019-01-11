@@ -97,7 +97,7 @@ def train_model(actor, critic, memory, actor_optim, critic_optim):
 
     # ----------------------------
     # step 2: train critic several steps with respect to returns
-    train_critic(critic, states, returns, critic_optim)
+    # train_critic(critic, states, returns, critic_optim)
 
     # ----------------------------
     # step 3: get gradient of loss and hessian of kl
@@ -111,5 +111,3 @@ def train_model(actor, critic, memory, actor_optim, critic_optim):
     params = flat_params(actor)
     new_params = params + 0.5 * step_dir
     update_model(actor, new_params)
-
-

@@ -37,7 +37,7 @@ def train_critic(critic, states, returns, critic_optim):
     for epoch in range(5):
         np.random.shuffle(arr)
 
-        for i in range(n // hp.batch_size):
+        for i in range(n // hp.batch_size): # 64
             batch_index = arr[hp.batch_size * i: hp.batch_size * (i + 1)]
             batch_index = torch.LongTensor(batch_index)
             inputs = torch.Tensor(states)[batch_index]
@@ -65,7 +65,7 @@ def train_model(actor, critic, memory, actor_optim, critic_optim):
     masks = list(memory[:, 3])
 
     returns = get_returns(rewards, masks)
-    train_critic(critic, states, returns, critic_optim)
+    # train_critic(critic, states, returns, critic_optim)
     train_actor(actor, returns, states, actions, actor_optim)
     return returns
 
