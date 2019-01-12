@@ -18,7 +18,6 @@ parser.add_argument("--load_model", type=str, default='ppo_max.tar',
 args = parser.parse_args()
 
 
-
 if __name__ == "__main__":
     env = gym.make(args.env)
     env.seed(500)
@@ -34,6 +33,7 @@ if __name__ == "__main__":
     critic = Critic(num_inputs)
 
     running_state = ZFilter((num_inputs,), clip=5)
+    
     if args.load_model is not None:
         pretrained_model_path = os.path.join(os.getcwd(), 'save_model', str(args.load_model))
 
@@ -61,10 +61,13 @@ if __name__ == "__main__":
             env.render()
             mu, std, _ = actor(torch.Tensor(state).unsqueeze(0))
             action = get_action(mu, std)[0]
+
             next_state, reward, done, _ = env.step(action)
             next_state = running_state(next_state)
+            
             state = next_state
             score += reward
+            
             if done:
                 print("{} cumulative reward: {}".format(episode, score))
                 break

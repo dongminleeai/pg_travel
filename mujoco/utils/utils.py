@@ -1,17 +1,18 @@
 import torch
 import math
 
-
+# normal_distribution의 entropy
 def get_action(mu, std):
     action = torch.normal(mu, std)
     action = action.data.numpy()
     return action
 
-
+# logstd = [0, 0, 0], std = [1, 1, 1] 
+# logarithm의 성질을 이용하여 ratio를 만들 때 사용하기 위한
+# normal distribution의 probability density
 def log_density(x, mu, std, logstd):
-    var = std.pow(2)
-    log_density = -(x - mu).pow(2) / (2 * var) \
-                  - 0.5 * math.log(2 * math.pi) - logstd
+    log_density = -(x - mu).pow(2) / (2 * std.pow(2)) # \
+                    # - ( 0.5 * math.log(2 * math.pi) ) # - logstd # ?
     return log_density.sum(1, keepdim=True)
 
 

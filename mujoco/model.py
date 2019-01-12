@@ -9,7 +9,7 @@ class Actor(nn.Module):
         self.num_inputs = num_inputs
         self.num_outputs = num_outputs
         super(Actor, self).__init__()
-        self.fc1 = nn.Linear(num_inputs, hp.hidden)
+        self.fc1 = nn.Linear(num_inputs, hp.hidden) # hp.hidden = 64
         self.fc2 = nn.Linear(hp.hidden, hp.hidden)
         self.fc3 = nn.Linear(hp.hidden, num_outputs)
         self.fc3.weight.data.mul_(0.1)

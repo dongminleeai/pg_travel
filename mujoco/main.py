@@ -34,10 +34,6 @@ elif args.algorithm == "PPO":
 
 
 if __name__=="__main__":
-    # you can choose other environments.
-    # possible environments: Ant-v2, HalfCheetah-v2, Hopper-v2, Humanoid-v2,
-    # HumanoidStandup-v2, InvertedPendulum-v2, Reacher-v2, Swimmer-v2,
-    # Walker2d-v2
     env = gym.make(args.env)
     env.seed(500)
     torch.manual_seed(500)
@@ -54,9 +50,7 @@ if __name__=="__main__":
     critic = Critic(num_inputs)
 
     running_state = ZFilter((num_inputs,), clip=5)
-    # <utils.running_state.ZFilter object at 0x10c7bac18>
-    # print("running_state", running_state)
-
+    
     if args.load_model is not None:
         saved_ckpt_path = os.path.join(os.getcwd(), 'save_model', str(args.load_model))
         ckpt = torch.load(saved_ckpt_path)
@@ -70,18 +64,21 @@ if __name__=="__main__":
 
         print("Loaded OK ex. Zfilter N {}".format(running_state.rs.n))
 
-    actor_optim = optim.Adam(actor.parameters(), lr=hp.actor_lr)
-    critic_optim = optim.Adam(critic.parameters(), lr=hp.critic_lr,
-                              weight_decay=hp.l2_rate)
+    actor_optim = optim.Adam(actor.parameters(), lr=hp.actor_lr) # hp.actor_lr = 0.0003 
+    critic_optim = optim.Adam(critic.parameters(), lr=hp.critic_lr, # hp.critic_lr = 0.0003
+                              weight_decay=hp.l2_rate) # hp.l2_rate = 0.001
 
-    episodes = 0
+
+    episodes = 0    
+
     for iter in range(15000):
         actor.eval(), critic.eval()
         memory = deque()
 
         steps = 0
         scores = []
-        while steps < 2048:
+
+        while steps < 2048: # ?
             episodes += 1
             state = env.reset()
 
@@ -100,24 +97,17 @@ if __name__=="__main__":
             # [ 0.97938591  0.5318234   0.61519367  0.59847909 -1.63746175  0.76422659
             # 1.44379947  0.81533691  0.78033282  0.75001262 -0.78464144]
 
-            # state 
-            # [ 1.24754546e+00 -1.81960531e-03  7.49504932e-04  4.73516957e-03
-            # -1.13169892e-03  3.49326044e-03  1.37597736e-03 -3.11373131e-04
-            # 1.26697456e-03 -7.93181335e-04 -3.45176126e-03]
-            # running_state(state) 
-            # [0.01424333 0.79506274 0.4574601  0.50328137 0.64677531 0.92352076
-            # 0.00605499 0.72728407 0.35249767 0.29978792 0.64943154]
-
-            # running_state는 input으로 들어오는 state의 scale이 일정하지 않기 때문에 사용합니다. 
-            # 즉 state의 각 dimension을 평균 0 분산 1로 standardization 하는 것입니다. 
+            # running_state는 input으로 들어오는 state의 scale이 일정하지 않기 때문에 사용한다.
+            # 즉, state의 각 dimension을 평균 0 분산 1로 standardization하는 것이다. 
             # 따라서 모델을 저장할 때 각 dimension 마다의 평균과 분산도 같이 저장해서 
-            # 테스트할 때 불러와서 사용해야 합니다.
+            # 테스트할 때 불러와서 사용해야 한다.
             # print("state", state)
             state = running_state(state)
             # print("running_state(state)", state)
             
             score = 0
-            for _ in range(10000):
+
+            for _ in range(10000): # ?
                 if args.render:
                     env.render()
 
@@ -126,13 +116,20 @@ if __name__=="__main__":
                 action = get_action(mu, std)[0]
                 next_state, reward, done, _ = env.step(action)
 
+                # next_state [ 1.25204271  0.00339264 -0.00230297 -0.00529779  0.00736752  0.01062921
+                # -0.1001518   0.22747316  0.43029206 -0.39176969  1.4032258 ]
+                # print("next_state", next_state)
                 next_state = running_state(next_state)
+                # [-0.70708052  0.70709582  0.70710092 -0.70710035  0.707105    0.70710611
+                # -0.70710669  0.70710674  0.70710676 -0.70710676  0.70710677]
+                # print("running_state(next_state)", next_state)
 
                 if done:
                     mask = 0
                 else:
                     mask = 1
 
+                # 차곡차곡 쌓는다!
                 memory.append([state, action, reward, mask])
 
                 score += reward
@@ -140,13 +137,18 @@ if __name__=="__main__":
 
                 if done:
                     break
+            
+            # for문 종료
             scores.append(score)
+        
+        # while문 종료
         score_avg = np.mean(scores)
         print('{} episode score is {:.2f}'.format(episodes, score_avg))
         writer.add_scalar('log/score', float(score_avg), iter)
 
-        actor.train(), critic.train()
+        actor.train(), critic.train() # ?
         train_model(actor, critic, memory, actor_optim, critic_optim)
+
 
         if iter % 100:
             score_avg = int(score_avg)
