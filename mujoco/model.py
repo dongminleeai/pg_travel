@@ -21,7 +21,7 @@ class Actor(nn.Module):
         mu = self.fc3(x)
         logstd = torch.zeros_like(mu)
         std = torch.exp(logstd)
-        return mu, std, logstd
+        return mu, std
 
 
 class Critic(nn.Module):

@@ -13,9 +13,10 @@ def train_model(actor, critic, memory, actor_optim, critic_optim):
     # ----------------------------
     # step 1: get returns and GAEs and log probability of old policy
     returns, advants = get_gae(rewards, masks, values)
-    mu, std, logstd = actor(torch.Tensor(states))
+    mu, std = actor(torch.Tensor(states))
 
-    old_policy = log_density(torch.Tensor(actions), mu, std, logstd)
+    # ratio를 구하기 위해
+    old_policy = log_density(torch.Tensor(actions), mu, std)
     old_values = critic(torch.Tensor(states))
 
     criterion = torch.nn.MSELoss()
@@ -81,10 +82,14 @@ def train_model(actor, critic, memory, actor_optim, critic_optim):
             clipped_loss = clipped_ratio * advants_samples
             actor_loss = -torch.min(loss, clipped_loss).mean()
 
-            loss = actor_loss + 0.5 * critic_loss # 0.5 ?
+            loss = actor_loss + 0.5 * critic_loss # 0.5 ? baseline 코드
 
             critic_optim.zero_grad()
-            loss.backward(retain_graph=True) # ?
+            # retain_graph=True : backprop한 것을 retain하겠다는 것.
+            # Why? 뒤에 actor loss 때 critic의 computational graph에서 backprop 했던 것들을 
+            # 다시 사용할 수 있기 때문에 retain_graph를 True로 해줌으로서 모아둔다.
+            # 이렇게 안쓰려면 model을 구성할때 class로 나눠서 구성하지말고 하나로 합쳐서 구성하면 된다.
+            loss.backward(retain_graph=True) 
             critic_optim.step()
 
             actor_optim.zero_grad()
@@ -102,7 +107,7 @@ def get_gae(rewards, masks, values):
     previous_value = 0
     running_advants = 0
 
-    # gamma = 0.99, lamda = 0.98
+    # gamma = 0.99, lambda = 0.98
     # 뒤에서부터 구한다!
     for t in reversed(range(0, len(rewards))):
         running_returns = rewards[t] + (hp.gamma * running_returns * masks[t])
@@ -124,10 +129,11 @@ def get_gae(rewards, masks, values):
 
 # 논문에서 6번 수식
 def surrogate_loss(actor, advants, states, old_policy, actions, batch_index):
-    mu, std, logstd = actor(torch.Tensor(states))
-    new_policy = log_density(actions, mu, std, logstd)
+    mu, std = actor(torch.Tensor(states))
+    new_policy = log_density(actions, mu, std)
     old_policy = old_policy[batch_index]
 
+    # r_t (theta) = \pi_\theta (a_t | s_t) / \pi_{\theta_{old}} (a_t | s_t)
     ratio = torch.exp(new_policy - old_policy)
     surrogate_loss = ratio * advants
     return surrogate_loss, ratio

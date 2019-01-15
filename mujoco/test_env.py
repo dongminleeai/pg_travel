@@ -1,9 +1,6 @@
 import gym
 
-# you can choose other environments.
-# possible environments: Ant-v2, HalfCheetah-v2, Hopper-v2, Humanoid-v2,
-# HumanoidStandup-v2, InvertedPendulum-v2, Reacher-v2, Swimmer-v2, Walker2D-v2
-env = gym.make("Walker2d-v2")
+env = gym.make("Hopper-v2")
 
 num_inputs = env.observation_space.shape[0]
 num_actions = env.action_space.shape[0]
@@ -11,11 +8,12 @@ num_actions = env.action_space.shape[0]
 print('state size:', num_inputs)
 print('action size:', num_actions)
 
-env.reset()
-for _ in range(1000):
-    env.render()
-    state, reward, done, _ = env.step(env.action_space.sample())
-    # print('state:', state)
+for episode in range(10000):
+    env.reset()
 
-    # reward = forward velocity - sum(action^2) + live_bonus
-    print('reward:', reward)
+    while True:
+        env.render()
+        action = env.action_space.sample()
+        state, reward, done, _ = env.step(action)
+        print("state : {} | action : {} | reward : {}".format(
+                state, action, reward))

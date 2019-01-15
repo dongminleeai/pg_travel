@@ -30,8 +30,8 @@ def get_gae(rewards, masks, values):
 
 
 def surrogate_loss(actor, advants, states, old_policy, actions):
-    mu, std, logstd = actor(torch.Tensor(states))
-    new_policy = log_density(torch.Tensor(actions), mu, std, logstd)
+    mu, std = actor(torch.Tensor(states))
+    new_policy = log_density(torch.Tensor(actions), mu, std)
     advants = advants.unsqueeze(1)
 
     surrogate = advants * torch.exp(new_policy - old_policy)
@@ -114,8 +114,8 @@ def train_model(actor, critic, memory, actor_optim, critic_optim):
 
     # ----------------------------
     # step 3: get gradient of loss and hessian of kl
-    mu, std, logstd = actor(torch.Tensor(states))
-    old_policy = log_density(torch.Tensor(actions), mu, std, logstd)
+    mu, std = actor(torch.Tensor(states))
+    old_policy = log_density(torch.Tensor(actions), mu, std)
 
     loss = surrogate_loss(actor, advants, states, old_policy.detach(), actions)
     loss_grad = torch.autograd.grad(loss, actor.parameters())

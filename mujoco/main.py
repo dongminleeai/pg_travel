@@ -78,7 +78,7 @@ if __name__=="__main__":
         steps = 0
         scores = []
 
-        while steps < 2048: # ?
+        while steps < 2048: # 논문
             episodes += 1
             state = env.reset()
 
@@ -107,12 +107,12 @@ if __name__=="__main__":
             
             score = 0
 
-            for _ in range(10000): # ?
+            for _ in range(10000): # 임의로. 10000step까지는 못가니까..?
                 if args.render:
                     env.render()
 
                 steps += 1
-                mu, std, _ = actor(torch.Tensor(state).unsqueeze(0))
+                mu, std = actor(torch.Tensor(state).unsqueeze(0))
                 action = get_action(mu, std)[0]
                 next_state, reward, done, _ = env.step(action)
 
@@ -146,7 +146,7 @@ if __name__=="__main__":
         print('{} episode score is {:.2f}'.format(episodes, score_avg))
         writer.add_scalar('log/score', float(score_avg), iter)
 
-        actor.train(), critic.train() # ?
+        actor.train(), critic.train()
         train_model(actor, critic, memory, actor_optim, critic_optim)
 
 

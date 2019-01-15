@@ -20,8 +20,8 @@ def get_returns(rewards, masks):
 
 
 def get_loss(actor, returns, states, actions):
-    mu, std, logstd = actor(torch.Tensor(states))
-    log_policy = log_density(torch.Tensor(actions), mu, std, logstd)
+    mu, std = actor(torch.Tensor(states))
+    log_policy = log_density(torch.Tensor(actions), mu, std)
     returns = returns.unsqueeze(1)
 
     objective = returns * log_policy

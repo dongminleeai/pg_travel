@@ -7,12 +7,12 @@ def get_action(mu, std):
     action = action.data.numpy()
     return action
 
-# logstd = [0, 0, 0], std = [1, 1, 1] 
-# logarithm의 성질을 이용하여 ratio를 만들 때 사용하기 위한
+# std = [1, 1, 1] 
+# logarithm의 property을 이용하여 ratio를 만들 때 사용하기 위한
 # normal distribution의 probability density
-def log_density(x, mu, std, logstd):
-    log_density = -(x - mu).pow(2) / (2 * std.pow(2)) # \
-                    # - ( 0.5 * math.log(2 * math.pi) ) # - logstd # ?
+def log_density(x, mu, std):
+    log_density = -(x - mu).pow(2) / (2 * std.pow(2)) \
+                     - 0.5 * math.log(2 * math.pi)
     return log_density.sum(1, keepdim=True)
 
 
@@ -51,17 +51,15 @@ def update_model(model, new_params):
 
 
 def kl_divergence(new_actor, old_actor, states):
-    mu, std, logstd = new_actor(torch.Tensor(states))
-    mu_old, std_old, logstd_old = old_actor(torch.Tensor(states))
+    mu, std = new_actor(torch.Tensor(states))
+    mu_old, std_old = old_actor(torch.Tensor(states))
     mu_old = mu_old.detach()
     std_old = std_old.detach()
-    logstd_old = logstd_old.detach()
 
     # kl divergence between old policy and new policy : D( pi_old || pi_new )
-    # pi_old -> mu0, logstd0, std0 / pi_new -> mu, logstd, std
+    # pi_old -> mu0, std0 / pi_new -> mu, std
     # be careful of calculating KL-divergence. It is not symmetric metric
-    kl = logstd_old - logstd + (std_old.pow(2) + (mu_old - mu).pow(2)) / \
-         (2.0 * std.pow(2)) - 0.5
+    kl = (std_old.pow(2) + (mu_old - mu).pow(2)) / (2.0 * std.pow(2)) - 0.5
     return kl.sum(1, keepdim=True)
 
 
